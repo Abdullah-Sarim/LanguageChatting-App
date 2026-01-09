@@ -1,10 +1,16 @@
 import { Link, useLocation } from "react-router";
 import useAuthUser from "../hooks/useAuthUser";
+import useLogout from "../hooks/useLogout";
+import { useState } from "react";
+import ConfirmModal from "../models/ConfirmModel";
+import { LogOutIcon } from "lucide-react";
 import { BellIcon, HomeIcon, ShipWheelIcon, UsersIcon } from "lucide-react";
 
 const Sidebar = ({ isOpen, onClose }) => {
   const { authUser } = useAuthUser();
   const location = useLocation();
+  const { logoutMutation } = useLogout();
+  const [open, setOpen] = useState(false);
   const currentPath = location.pathname;
 
   return (
@@ -90,9 +96,22 @@ const Sidebar = ({ isOpen, onClose }) => {
                 Online
               </p>
             </div>
+            <button
+            className="block sm:hidden btn btn-ghost btn-circle"
+            onClick={() => setOpen(true)}
+          >
+            <LogOutIcon className="h-8 w-8 text-base-content opacity-75" />
+          </button>
           </div>
         </div>
       </aside>
+      <ConfirmModal
+            isOpen={open}
+            title="Confirm Logout"
+            message="Are you sure you want to log out?"
+            onCancel={() => setOpen(false)}
+            onConfirm={logoutMutation}
+          />
     </>
   );
 };

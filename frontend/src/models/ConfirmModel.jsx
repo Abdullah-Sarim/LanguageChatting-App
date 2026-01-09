@@ -1,7 +1,6 @@
 import useLogout from "../hooks/useLogout";
 
 const ConfirmModal = ({ isOpen, title, message, onConfirm, onCancel }) => {
-   // ✅ ALWAYS called
 
   if (!isOpen) return null
 

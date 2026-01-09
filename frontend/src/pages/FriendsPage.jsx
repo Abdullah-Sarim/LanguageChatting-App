@@ -12,7 +12,7 @@ const FriendsPage = () => {
     try {
       const res = await axiosInstance.get("/users/friends");
 
-      // ✅ normalize response
+
       setFriends(Array.isArray(res.data.friends) ? res.data.friends : []);
     } catch (err) {
       setFriends([]); // never undefined
@@ -56,12 +56,10 @@ const FriendsPage = () => {
         `/users/friends/${friendToRemove._id}`
       );
 
-      // ✅ 204 is ALSO success
       if (res.status !== 200 && res.status !== 204) {
         throw new Error("Remove failed");
       }
 
-      // 🔥 refresh everything related
       queryClient.invalidateQueries({ queryKey: ["friends"] });
       queryClient.invalidateQueries({ queryKey: ["outgoingFriendReqs"] });
       queryClient.invalidateQueries({ queryKey: ["users"] });

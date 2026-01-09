@@ -33,13 +33,13 @@ const Navbar = ({ onMenuClick }) => {
     <nav className="bg-base-200 border-b border-base-300 sticky top-0 z-30 h-16 flex items-center">
       {/* Hamburger Menu Button (md and below) */}
       <button
-        className="m-3 btn btn-ghost btn-circle md:hidden"
+        className="my-3 sm:mx-3 btn btn-ghost btn-circle md:hidden"
         onClick={onMenuClick}
       >
         <Menu className="h-8 w-8" />
       </button>
 
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="container mx-auto sm:px-6 lg:px-8">
         <div className="flex items-center justify-end gap-2 w-full">
           {/* LOGO - ONLY IN THE CHAT PAGE */}
           {isChatPage && (
@@ -56,7 +56,7 @@ const Navbar = ({ onMenuClick }) => {
 
           <UserSearch />
 
-          <div className="flex items-center gap-5 sm:gap-5 ml-auto">
+          <div className="flex items-center gap-3 sm:gap-5 sm:ml-auto">
             <Link to={"/notifications"}>
               <button className="btn btn-ghost btn-circle">
                 <BellIcon className="h-7 w-7 text-base-content opacity-70" />
@@ -87,10 +87,10 @@ const Navbar = ({ onMenuClick }) => {
           </button> */}
 
           <button
-            className="btn btn-ghost btn-circle"
+            className="hidden sm:block btn btn-ghost btn-circle"
             onClick={() => setOpen(true)}
           >
-            <LogOutIcon className=" h-8 w-8 text-base-content opacity-75" />
+            <LogOutIcon className="h-8 w-8 text-base-content opacity-75" />
           </button>
 
           {/* ////////////////////// */}
