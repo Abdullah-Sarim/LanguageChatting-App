@@ -12,11 +12,33 @@ import chatRoutes from "./routes/chat.route.js"
 const app = express();
 const PORT = process.env.PORT;
 
+
+const allowedOrigins = [
+  "http://localhost:3000",
+  "http://localhost:5173",
+  "https://languagechatting-app.onrender.com",
+  process.env.FRONTEND_URL,
+].filter(Boolean); // removes undefined/null
+
 app.use(
   cors({
-    origin: ["http://localhost:5173"],
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true
+    origin: (origin, callback) => {
+      // allow server-to-server, Postman, mobile apps
+      if (!origin) return callback(null, true);
+
+      // normalize origin (remove trailing slash)
+      const normalizedOrigin = origin.replace(/\/$/, "");
+
+      if (allowedOrigins.includes(normalizedOrigin)) {
+        callback(null, true);
+      } else {
+        callback(
+          new Error(`CORS blocked origin: ${normalizedOrigin}`)
+        );
+      }
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   })
 );
 
