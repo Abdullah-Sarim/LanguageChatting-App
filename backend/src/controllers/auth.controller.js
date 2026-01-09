@@ -61,7 +61,8 @@ export async function signup(req, res) {
       maxAge: 7 * 24 * 60 * 60 * 1000,
       httpOnly: true, // prevent XSS attacks,
       sameSite: process.env.NODE_ENV === "development" ? "lax" : "none", // prevent CSRF attacks
-      secure: process.env.NODE_ENV === "!development",
+      secure: process.env.NODE_ENV === "production",
+
       path: "/",
     });
 
@@ -96,7 +97,8 @@ export async function login(req, res) {
       maxAge: 7 * 24 * 60 * 60 * 1000,
       httpOnly: true, // prevent XSS attacks,
       sameSite: process.env.NODE_ENV === "development" ? "lax" : "none",
-      secure: process.env.NODE_ENV === "!development",
+      secure: process.env.NODE_ENV === "production",
+
       path: "/",
     });
     // debug ......
@@ -115,7 +117,7 @@ export function logout(req, res) {
   res.clearCookie("jwt", {
     httpOnly: true,
     sameSite: process.env.NODE_ENV === "development" ? "lax" : "none", // prevent CSRF attacks
-    secure: process.env.NODE_ENV === "!development",
+    secure: process.env.NODE_ENV === "production",
   });
   res.status(200).json({ success: true, message: "Logout successful" });
 }
