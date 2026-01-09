@@ -16,7 +16,7 @@ const PORT = process.env.PORT;
 const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:5173",
-  "https://languagechatting-app.onrender.com",
+  "https://language-chatting-app.vercel.app",
   process.env.FRONTEND_URL,
 ].filter(Boolean); // removes undefined/null
 
