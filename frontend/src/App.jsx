@@ -1,11 +1,11 @@
 import { Navigate, Route, Routes } from "react-router";
 
 import HomePage from "./pages/HomePage.jsx";
+import MessagesPage from "./pages/MessagesPage.jsx";
 import SignUpPage from "./pages/SignUpPage.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
 import NotificationsPage from "./pages/NotificationsPage.jsx";
 import CallPage from "./pages/CallPage.jsx";
-import ChatPage from "./pages/ChatPage.jsx";
 import OnboardingPage from "./pages/OnboardingPage.jsx";
 
 import { Toaster } from "react-hot-toast";
@@ -34,7 +34,7 @@ const App = () => {
           path="/"
           element={
             isAuthenticated && isOnboarded ? (
-              <Layout showSidebar={true}>
+              <Layout>
                 <StreamChatProvider>
                   <HomePage />
                 </StreamChatProvider>
@@ -69,9 +69,24 @@ const App = () => {
           path="/notifications"
           element={
             isAuthenticated && isOnboarded ? (
-              <Layout showSidebar={true}>
+              <Layout>
                 <StreamChatProvider>
                   <NotificationsPage />
+                </StreamChatProvider>
+              </Layout>
+            ) : (
+              <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />
+            )
+          }
+        />
+
+        <Route
+          path="/messages"
+          element={
+            isAuthenticated && isOnboarded ? (
+              <Layout hideSidebar={true} fullPage={true}>
+                <StreamChatProvider>
+                  <MessagesPage />
                 </StreamChatProvider>
               </Layout>
             ) : (
@@ -84,7 +99,7 @@ const App = () => {
           path="/friends"
           element={
             isAuthenticated && isOnboarded ? (
-              <Layout showSidebar>
+              <Layout>
                 <StreamChatProvider>
                 <FriendsPage />
                 </StreamChatProvider>
@@ -108,20 +123,7 @@ const App = () => {
           }
         />
 
-        <Route
-          path="/chat/:id"
-          element={
-            isAuthenticated && isOnboarded ? (
-              <Layout showSidebar={false}>
-                <StreamChatProvider>
-                  <ChatPage />
-                </StreamChatProvider>
-              </Layout>
-            ) : (
-              <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />
-            )
-          }
-        />
+
 
         <Route
           path="/onboarding"

@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router";
 import useAuthUser from "../hooks/useAuthUser";
 import { ArrowLeft } from "lucide-react";
-
 import {
   Channel,
   ChannelHeader,
@@ -12,9 +11,8 @@ import {
   Window,
   TypingIndicator,
 } from "stream-chat-react";
-
 import toast from "react-hot-toast";
-
+import RingModal from "../models/RingModal.jsx";
 import ChatLoader from "../components/ChatLoader";
 import CallButton from "../components/CallButton";
 import { useStreamChat } from "../context/StreamChatContext";
@@ -27,6 +25,7 @@ const ChatPage = () => {
   const { client } = useStreamChat();
 
   const [channel, setChannel] = useState(null);
+  const [ringing, setRinging] = useState({ open: false, user: null, channelId: null, callUrl: null });
 
   useEffect(() => {
     if (!client || !authUser || !targetUserId) return;
@@ -95,6 +94,17 @@ const ChatPage = () => {
           </Window>
         </div>
 
+        <RingModal
+          isOpen={ringing.open}
+          user={ringing.user}
+          onAccept={() => {
+            // navigate to the call route
+            navigate(`/call/${ringing.channelId}`);
+            setRinging({ open: false, user: null, channelId: null, callUrl: null });
+          }}
+          onDecline={() => setRinging({ open: false, user: null, channelId: null, callUrl: null })}
+          onClose={() => setRinging({ open: false, user: null, channelId: null, callUrl: null })}
+        />
         <Thread />
       </Channel>
     </div>
