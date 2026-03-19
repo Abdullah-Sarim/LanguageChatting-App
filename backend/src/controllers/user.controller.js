@@ -380,3 +380,73 @@ export async function getOutgoingFriendReqs(req, res) {
     res.status(500).json({ message: "Internal Server Error" });
   }
 }
+
+export async function rejectFriendRequest(req, res) {
+  try {
+    const { id: requestId } = req.params;
+
+    const friendRequest = await FriendRequest.findById(requestId);
+
+    if (!friendRequest) {
+      return res.status(404).json({ message: "Friend request not found" });
+    }
+
+    // Verify the current user is the recipient
+    if (friendRequest.recipient.toString() !== req.user.id) {
+      return res
+        .status(403)
+        .json({ message: "You are not authorized to reject this request" });
+    }
+
+    friendRequest.status = "rejected";
+    await friendRequest.save();
+
+    res.status(200).json({ message: "Friend request rejected" });
+  } catch (error) {
+    console.log("Error in rejectFriendRequest controller", error.message);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+}
+
+export async function blockUser(req, res) {
+  try {
+    const { userId } = req.params;
+    const currentUserId = req.user.id;
+
+    if (userId === currentUserId) {
+      return res.status(400).json({ message: "You cannot block yourself" });
+    }
+
+    const userToBlock = await User.findById(userId);
+    if (!userToBlock) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Add to blocked list
+    await User.findByIdAndUpdate(currentUserId, {
+      $addToSet: { blockedUsers: userId },
+    });
+
+    // Remove from friends if they are friends
+    await User.findByIdAndUpdate(currentUserId, {
+      $pull: { friends: userId },
+    });
+
+    await User.findByIdAndUpdate(userId, {
+      $pull: { friends: currentUserId },
+    });
+
+    // Delete any pending friend requests
+    await FriendRequest.deleteMany({
+      $or: [
+        { sender: currentUserId, recipient: userId },
+        { sender: userId, recipient: currentUserId },
+      ],
+    });
+
+    res.status(200).json({ message: "User blocked successfully" });
+  } catch (error) {
+    console.log("Error in blockUser controller", error.message);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+}
