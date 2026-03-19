@@ -1,37 +1,53 @@
 import { Link, useLocation } from "react-router";
 import useAuthUser from "../hooks/useAuthUser";
 import useLogout from "../hooks/useLogout";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ConfirmModal from "../models/ConfirmModel";
 import { LogOutIcon } from "lucide-react";
-import { BellIcon, HomeIcon, ShipWheelIcon, UsersIcon } from "lucide-react";
+import {
+  BellIcon,
+  HomeIcon,
+  ShipWheelIcon,
+  UsersIcon,
+  MessageSquareIcon,
+} from "lucide-react";
 
-const Sidebar = ({ isOpen, onClose }) => {
+const Sidebar = ({ isOpen, onClose, hideByDefault = false }) => {
   const { authUser } = useAuthUser();
   const location = useLocation();
   const { logoutMutation } = useLogout();
   const [open, setOpen] = useState(false);
+  const [isLargeScreen, setIsLargeScreen] = useState(window.innerWidth >= 768);
   const currentPath = location.pathname;
+
+  useEffect(() => {
+    const handleResize = () => setIsLargeScreen(window.innerWidth >= 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const shouldShow = isOpen || (!hideByDefault && isLargeScreen);
+  const isOverlay = hideByDefault || !isLargeScreen;
+  const isAlwaysVisible = !hideByDefault && isLargeScreen;
 
   return (
     <>
-      {/* Mobile Backdrop */}
-      {isOpen && (
+      {/* Backdrop */}
+      {isOpen && isOverlay && (
         <div
-          className="fixed inset-0 bg-black/20 z-30 md:hidden"
+          className="fixed inset-0 bg-black/20 z-30"
           onClick={onClose}
         />
       )}
 
       <aside
         className={`
-    fixed md:sticky top-0 left-0 md:z-30 z-100
+    ${isOverlay ? "fixed" : "sticky"} top-0 left-0 z-40
     h-screen
     w-64 lg:w-75
     bg-base-200 border-r border-base-300
     transform transition-transform duration-300
-    ${isOpen ? "translate-x-0" : "-translate-x-full"}
-    md:translate-x-0
+    ${isAlwaysVisible ? "" : isOpen ? "translate-x-0" : "-translate-x-full"}
     flex flex-col
   `}
       >
@@ -67,6 +83,18 @@ const Sidebar = ({ isOpen, onClose }) => {
             <span>Friends</span>
           </Link>
 
+
+          {/* Messages button added below Friends and above Notifications */}
+          <Link
+            to="/messages"
+            onClick={onClose}
+            className={`btn btn-ghost justify-start w-full gap-3 px-3 normal-case ${
+              currentPath === "/messages" ? "btn-active" : ""
+            }`}
+          >
+            <MessageSquareIcon className="size-5 opacity-70" />
+            <span>Messages</span>
+          </Link>
           <Link
             to="/notifications"
             onClick={onClose}

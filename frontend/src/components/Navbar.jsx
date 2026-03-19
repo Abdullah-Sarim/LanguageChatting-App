@@ -1,65 +1,54 @@
 import { Link, useLocation } from "react-router";
 import useAuthUser from "../hooks/useAuthUser";
-import { Menu, BellIcon, LogOutIcon, ShipWheelIcon, Languages, BetweenVerticalStart } from "lucide-react";
+import { Menu, BellIcon, LogOutIcon, ShipWheelIcon, Languages } from "lucide-react";
 import UserSearch from "./UserSearch";
 import ThemeSelector from "./ThemeSelector";
 import useLogout from "../hooks/useLogout";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ConfirmModal from "../models/ConfirmModel";
 import ProfileInsetModal from "../models/ProfileInsetModel";
 import Sidebar from "./Sidebar";
 
-const Navbar = ({ onMenuClick }) => {
+const Navbar = ({ onMenuClick, hideSidebar = false }) => {
   const { authUser } = useAuthUser();
   const { logoutMutation } = useLogout();
   const location = useLocation();
-  const isChatPage = location.pathname?.startsWith("/chat");
+  const isMessagesPage = location.pathname === "/messages";
   const [open, setOpen] = useState(false);
   const [openProfile, setOpenProfile] = useState(false);
+  const [isSmallScreen, setIsSmallScreen] = useState(false);
 
-  
+  useEffect(() => {
+    const checkScreen = () => setIsSmallScreen(window.innerWidth < 768);
+    checkScreen();
+    window.addEventListener("resize", checkScreen);
+    return () => window.removeEventListener("resize", checkScreen);
+  }, []);
 
-  // const queryClient = useQueryClient();
-  // const { mutate: logoutMutation } = useMutation({
-  //   mutationFn: logout,
-  //   onSuccess: () => queryClient.invalidateQueries({ queryKey: ["authUser"] }),
-  // });
-
-  //const { logoutMutation } = useLogout();
+  const showHamburger = isSmallScreen || isMessagesPage || hideSidebar;
 
 
-  
   return (
     <nav className="bg-base-200 border-b border-base-300 sticky top-0 z-30 h-16 flex items-center">
-      {/* Hamburger Menu Button (md and below) */}
-      <button
-        className="my-3 sm:mx-3 btn btn-ghost btn-circle md:hidden"
-        onClick={onMenuClick}
-      >
-        <Menu className="h-8 w-8" />
-      </button>
+      {/* Hamburger Menu Button */}
+      {showHamburger && (
+        <button
+          className="my-3 sm:mx-3 btn btn-ghost btn-circle"
+          onClick={onMenuClick}
+        >
+          <Menu className="h-8 w-8" />
+        </button>
+      )}
 
       <div className="container mx-auto sm:px-6 lg:px-8">
         <div className="flex items-center justify-end gap-2 w-full">
-          {/* LOGO - ONLY IN THE CHAT PAGE */}
-          {isChatPage && (
-            <div className="">
-              <Link to="/" className="flex items-center gap-2">
-                <BetweenVerticalStart className="size-7 md:size-10 text-primary" />
-                <span className="hidden sm:block md:text-3xl sm:text-2xl font-bold font-mono bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary  tracking-wider">
-                  V-LChat
-                </span>
-              </Link>
-            </div>
-            
-          )}
 
           <UserSearch />
 
           <div className="flex items-center gap-3 sm:gap-5 sm:ml-auto">
             <Link to={"/notifications"}>
               <button className="btn btn-ghost btn-circle">
-                <BellIcon className="h-7 w-7 text-base-content opacity-70" />
+                <BellIcon className="h-8 w-8 text-base-content opacity-80" />
               </button>
             </Link>
           </div>
@@ -71,7 +60,7 @@ const Navbar = ({ onMenuClick }) => {
             className="avatar cursor-pointer"
             onClick={() => setOpenProfile(true)}
           >
-            <div className="w-13 rounded-full">
+            <div className="w-10 rounded-full">
               <img src={authUser?.profilePic} alt={authUser.fullName} />
             </div>
           </div>
@@ -81,16 +70,11 @@ const Navbar = ({ onMenuClick }) => {
             onClose={() => setOpenProfile(false)}
           />
 
-          {/* Logout button */}
-          {/* <button className="btn btn-ghost btn-circle" onClick={logoutMutation}>
-            <LogOutIcon className="h-6 w-6 text-base-content opacity-70" />
-          </button> */}
-
           <button
             className="hidden sm:block btn btn-ghost btn-circle"
             onClick={() => setOpen(true)}
           >
-            <LogOutIcon className="h-8 w-8 text-base-content opacity-75" />
+            <LogOutIcon className="h-9 w-9 text-base-content opacity-75" />
           </button>
 
           {/* ////////////////////// */}
@@ -101,7 +85,6 @@ const Navbar = ({ onMenuClick }) => {
             onCancel={() => setOpen(false)}
             onConfirm={logoutMutation}
           />
-
           {/* //////////////////// */}
         </div>
       </div>
