@@ -1,7 +1,10 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router";
 import { useChatContext } from "stream-chat-react";
 import { LANGUAGE_TO_FLAG } from "../constants";
 import { EllipsisVertical, Pin, PinOff } from "lucide-react";
+import { blockUser } from "../lib/api";
+import toast from "react-hot-toast";
 
 const FriendCard = ({
   friend,
@@ -10,6 +13,45 @@ const FriendCard = ({
   showActions = false,
 }) => {
   const { client } = useChatContext();
+  const [pinnedFriends, setPinnedFriends] = useState([]);
+  const [isBlocking, setIsBlocking] = useState(false);
+
+  useEffect(() => {
+    const pinned = JSON.parse(localStorage.getItem("pinnedFriends")) || [];
+    setPinnedFriends(pinned);
+  }, []);
+
+  const isPinned = pinnedFriends.includes(friend._id);
+
+  const togglePin = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const updated = isPinned
+      ? pinnedFriends.filter((id) => id !== friend._id)
+      : [...pinnedFriends, friend._id];
+
+    localStorage.setItem("pinnedFriends", JSON.stringify(updated));
+    setPinnedFriends(updated);
+  };
+
+  const handleBlock = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!confirm(`Are you sure you want to block ${friend.fullName}?`)) return;
+
+    try {
+      setIsBlocking(true);
+      await blockUser(friend._id);
+      toast.success(`Blocked ${friend.fullName}`);
+      window.location.reload();
+    } catch (error) {
+      toast.error("Failed to block user");
+    } finally {
+      setIsBlocking(false);
+    }
+  };
 
   /* STREAM PRESENCE*/
   const streamUser = client?.state?.users?.[friend._id];
@@ -40,22 +82,6 @@ const FriendCard = ({
   const channel = channelId ? client?.channel("messaging", channelId) : null;
 
   const unreadCount = channel?.state?.unreadCount || 0;
-
-  /*PIN FRIEND (local) */
-  const pinnedFriends = JSON.parse(localStorage.getItem("pinnedFriends")) || [];
-
-  const isPinned = pinnedFriends.includes(friend._id);
-
-  const togglePin = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    const updated = isPinned
-      ? pinnedFriends.filter((id) => id !== friend._id)
-      : [...pinnedFriends, friend._id];
-
-    localStorage.setItem("pinnedFriends", JSON.stringify(updated));
-  };
 
   return (
     <div className="card bg-base-200 hover:shadow-md transition-shadow relative">
@@ -129,7 +155,7 @@ const FriendCard = ({
         </Link> */}
 
         <div className="flex gap-2 mt-2">
-          <Link to={`/chat/${friend._id}`} className="btn btn-outline flex-1">
+          <Link to={`/messages?friendId=${friend._id}`} className="btn btn-outline flex-1">
             Message
           </Link>
 
@@ -141,7 +167,7 @@ const FriendCard = ({
 
               <ul className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-40 z-50">
                 <li>
-                  <Link to={`/chat/${friend._id}`}>💬 Message</Link>
+                  <Link to={`/messages?friendId=${friend._id}`}>💬 Message</Link>
                 </li>
 
                 {showRemove && (
@@ -161,11 +187,8 @@ const FriendCard = ({
 
                 <li>
                   <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      alert("Block user (next step)");
-                    }}
+                    onClick={handleBlock}
+                    disabled={isBlocking}
                   >
                     🚫 Block User
                   </button>
