@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { acceptFriendRequest, getFriendRequests } from "../lib/api";
-import { BellIcon, ClockIcon, MessageSquareIcon, UserCheckIcon } from "lucide-react";
+import { acceptFriendRequest, rejectFriendRequest, getFriendRequests } from "../lib/api";
+import { BellIcon, ClockIcon, MessageSquareIcon, UserCheckIcon, X } from "lucide-react";
 import NoNotificationsFound from "../components/NoNotificationsFound";
 
 const NotificationsPage = () => {
@@ -11,11 +11,18 @@ const NotificationsPage = () => {
     queryFn: getFriendRequests,
   });
 
-  const { mutate: acceptRequestMutation, isPending } = useMutation({
+  const { mutate: acceptRequestMutation, isPending: isAccepting } = useMutation({
     mutationFn: acceptFriendRequest,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["friendRequests"] });
       queryClient.invalidateQueries({ queryKey: ["friends"] });
+    },
+  });
+
+  const { mutate: rejectRequestMutation, isPending: isRejecting } = useMutation({
+    mutationFn: rejectFriendRequest,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["friendRequests"] });
     },
   });
 
@@ -66,13 +73,22 @@ const NotificationsPage = () => {
                             </div>
                           </div>
 
-                          <button
-                            className="btn btn-primary btn-sm"
-                            onClick={() => acceptRequestMutation(request._id)}
-                            disabled={isPending}
-                          >
-                            Accept
-                          </button>
+                          <div className="flex gap-2">
+                            <button
+                              className="btn btn-primary btn-sm"
+                              onClick={() => acceptRequestMutation(request._id)}
+                              disabled={isAccepting}
+                            >
+                              Accept
+                            </button>
+                            <button
+                              className="btn btn-ghost btn-sm"
+                              onClick={() => rejectRequestMutation(request._id)}
+                              disabled={isRejecting}
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
