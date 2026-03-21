@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { axiosInstance } from "../lib/axios";
 import FriendCard from "../components/FriendCard";
 import ConfirmModal from "../models/ConfirmModel";
 
 const FriendsPage = () => {
+  const queryClient = useQueryClient();
   const [friends, setFriends] = useState([]);
   const [loading, setLoading] = useState(true);
   const [friendToRemove, setFriendToRemove] = useState(null);
@@ -12,8 +14,18 @@ const FriendsPage = () => {
     try {
       const res = await axiosInstance.get("/users/friends");
 
+      const pinnedFriends = JSON.parse(localStorage.getItem("pinnedFriends")) || [];
+      const allFriends = Array.isArray(res.data.friends) ? res.data.friends : [];
+      
+      const sortedFriends = allFriends.sort((a, b) => {
+        const aPinned = pinnedFriends.includes(a._id);
+        const bPinned = pinnedFriends.includes(b._id);
+        if (aPinned && !bPinned) return -1;
+        if (!aPinned && bPinned) return 1;
+        return 0;
+      });
 
-      setFriends(Array.isArray(res.data.friends) ? res.data.friends : []);
+      setFriends(sortedFriends);
     } catch (err) {
       setFriends([]); // never undefined
     } finally {
@@ -25,31 +37,10 @@ const FriendsPage = () => {
     fetchFriends();
   }, []);
 
-  // const handleRemoveFriend = async (friendId) => {
-  //   if (!confirm("Remove this friend?")) return;
-
-  //   try {
-  //     await axiosInstance.delete(`/users/friends/${friendId}`);
-  //     setFriends((prev) => prev.filter((f) => f._id !== friendId));
-  //   } catch (error) {
-  //     alert("Failed to remove friend");
-  //   }
-  // };
-
   const handleRemoveFriend = (friend) => {
     setFriendToRemove(friend);
   };
-  // const confirmRemove = async () => {
-  //   try {
-  //     await axiosInstance.delete(`/users/friends/${friendToRemove._id}`);
-  //     setFriends((prev) => prev.filter((f) => f._id !== friendToRemove._id));
-  //   } catch {
-  //     alert("Failed to remove friend");
-  //   } finally {
-  //     setFriendToRemove(null);
-  //   }
-  // };
-
+ 
   const confirmRemove = async () => {
     try {
       const res = await axiosInstance.delete(
@@ -63,6 +54,8 @@ const FriendsPage = () => {
       queryClient.invalidateQueries({ queryKey: ["friends"] });
       queryClient.invalidateQueries({ queryKey: ["outgoingFriendReqs"] });
       queryClient.invalidateQueries({ queryKey: ["users"] });
+      
+      fetchFriends();
     } catch {
       alert("Failed to remove friend");
     } finally {
