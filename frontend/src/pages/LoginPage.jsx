@@ -9,18 +9,6 @@ const LoginPage = () => {
     password: "",
   });
 
-  // This is how we did it at first, without using our custom hook
-  // const queryClient = useQueryClient();
-  // const {
-  //   mutate: loginMutation,
-  //   isPending,
-  //   error,
-  // } = useMutation({
-  //   mutationFn: login,
-  //   onSuccess: () => queryClient.invalidateQueries({ queryKey: ["authUser"] }),
-  // });
-
-  // This is how we did it using our custom hook - optimized version
   const { isPending, error, loginMutation } = useLogin();
 
   const handleLogin = (e) => {
@@ -31,7 +19,7 @@ const LoginPage = () => {
   return (
     <div
       className="h-screen flex items-center justify-center p-4 sm:p-6 md:p-8"
-      data-theme="dim"
+      data-theme="sunset"
     >
       <div className="border border-primary/25 flex flex-col lg:flex-row w-full max-w-6xl mx-auto bg-base-100 rounded-4xl shadow-lg overflow-hidden">
         {/* LOGIN FORM SECTION */}
@@ -134,11 +122,11 @@ const LoginPage = () => {
         <div className="hidden lg:flex w-full lg:w-1/2 bg-primary/10 items-center justify-center">
           <div className="max-w-md p-5">
             {/* Illustration */}
-            <div className="relative aspect-square max-w-sm mx-auto">
+            <div className="relative aspect-square max-w-sm mx-auto rounded-4xl overflow-hidden shadow-lg border">
               <img
                 src="/s.png"
                 alt="Language connection illustration"
-                className="w-full h-full"
+                className="w-full h-full object-cover"
               />
             </div>
 

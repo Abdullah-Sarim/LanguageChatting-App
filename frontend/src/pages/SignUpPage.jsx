@@ -11,18 +11,6 @@ const SignUpPage = () => {
     password: "",
   });
 
-  // This is how we did it at first, without using our custom hook
-  // const queryClient = useQueryClient();
-  // const {
-  //   mutate: signupMutation,
-  //   isPending,
-  //   error,
-  // } = useMutation({
-  //   mutationFn: signup,
-  //   onSuccess: () => queryClient.invalidateQueries({ queryKey: ["authUser"] }),
-  // });
-
-  // This is how we did it using our custom hook - optimized version
   const { isPending, error, signupMutation } = useSignUp();
 
   const handleSignup = (e) => {
@@ -33,7 +21,7 @@ const SignUpPage = () => {
   return (
     <div
       className="h-screen flex items-center justify-center p-4 sm:p-6 md:p-8"
-      data-theme="dim"
+      data-theme="sunset"
     >
       <div className="border border-primary/25 flex flex-col lg:flex-row w-full max-w-6xl mx-auto bg-base-100 rounded-4xl shadow-lg overflow-hidden">
         {/* SIGNUP FORM - LEFT SIDE */}
@@ -63,7 +51,7 @@ const SignUpPage = () => {
                 <div>
                   <h2 className="text-2xl font-semibold">Create an Account</h2>
                   <p className="text-sm opacity-70">
-                    Join Streamify and start your language learning adventure!
+                    Join LangChat and start your language learning adventure!
                   </p>
                 </div>
 
@@ -175,11 +163,11 @@ const SignUpPage = () => {
         <div className="hidden lg:flex w-full lg:w-1/2 bg-primary/10 items-center justify-center">
           <div className="max-w-md p-8">
             {/* Illustration */}
-            <div className="relative aspect-square max-w-sm mx-auto">
+            <div className="relative aspect-square max-w-sm mx-auto rounded-4xl overflow-hidden shadow-lg border">
               <img
                 src="/s.png"
                 alt="Language connection illustration"
-                className="w-full h-full"
+                className="w-full h-full object-cover"
               />
             </div>
 
