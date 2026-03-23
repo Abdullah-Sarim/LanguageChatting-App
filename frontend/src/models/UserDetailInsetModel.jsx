@@ -89,7 +89,7 @@ const UserProfileInsetModal = ({
                   className="btn btn-outline w-40"
                   onClick={() => {
                     onClose();
-                    navigate(`/chat/${user._id}`);
+                    navigate(`/messages?friendId=${user._id}`);
                   }}
                 >
                   Message
