@@ -11,6 +11,9 @@ import {
   UsersIcon,
   MessageSquareIcon,
 } from "lucide-react";
+import { useStreamChat } from "../context/StreamChatContext.jsx";
+import { useQuery } from "@tanstack/react-query";
+import { getFriendRequests } from "../lib/api";
 
 const Sidebar = ({ isOpen, onClose, hideByDefault = false }) => {
   const { authUser } = useAuthUser();
@@ -29,6 +32,39 @@ const Sidebar = ({ isOpen, onClose, hideByDefault = false }) => {
   const shouldShow = isOpen || (!hideByDefault && isLargeScreen);
   const isOverlay = hideByDefault || !isLargeScreen;
   const isAlwaysVisible = !hideByDefault && isLargeScreen;
+
+  const streamChat = useStreamChat();
+  const client = streamChat?.client;
+  const userId = authUser?.id || authUser?._id;
+  const [totalUnread, setTotalUnread] = useState(0);
+
+  useEffect(() => {
+    if (!client || !userId) return;
+    let interval;
+    const fetchUnreadCount = async () => {
+      if (!client || !userId) return;
+      try {
+        const channels = await client.queryChannels({
+          type: "messaging",
+          members: { $in: [userId] },
+        });
+        const total = channels.reduce((sum, ch) => sum + ch.countUnread(), 0);
+        setTotalUnread(total);
+      } catch {}
+    };
+    fetchUnreadCount();
+    interval = setInterval(fetchUnreadCount, 30000);
+    return () => clearInterval(interval);
+  }, [client, userId]);
+
+  const { data: friendRequests } = useQuery({
+    queryKey: ["friendRequests"],
+    queryFn: getFriendRequests,
+    refetchInterval: 30000,
+    enabled: !!authUser,
+  });
+
+  const notificationCount = friendRequests?.incomingReqs?.length || 0;
 
   return (
     <>
@@ -51,7 +87,7 @@ const Sidebar = ({ isOpen, onClose, hideByDefault = false }) => {
     flex flex-col
   `}
       >
-        <div className="p-5 border-b border-base-300">
+        <div className="p-3.5 border-b border-base-300">
           <Link to="/" onClick={onClose} className="flex items-center gap-2.5">
             <ShipWheelIcon className="lg:size-10 size-8 text-primary" />
             <span className="lg:text-3xl text-2xl font-bold font-mono bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary  tracking-wider">
@@ -64,23 +100,23 @@ const Sidebar = ({ isOpen, onClose, hideByDefault = false }) => {
           <Link
             to="/"
             onClick={onClose}
-            className={`btn btn-ghost justify-start w-full gap-3 px-3 normal-case ${
+            className={`btn btn-ghost justify-start w-full gap-5 px-3 normal-case ${
               currentPath === "/" ? "btn-active" : ""
             }`}
           >
             <HomeIcon className="size-5 opacity-70" />
-            <span>Home</span>
+            <span className="flex-">Home</span>
           </Link>
 
           <Link
             to="/friends"
             onClick={onClose}
-            className={`btn btn-ghost justify-start w-full gap-3 px-3 normal-case ${
+            className={`btn btn-ghost justify-start w-full gap-5 px-3 normal-case ${
               currentPath === "/friends" ? "btn-active" : ""
             }`}
           >
             <UsersIcon className="size-5 opacity-70" />
-            <span>Friends</span>
+            <span className="flex-">Friends</span>
           </Link>
 
 
@@ -88,22 +124,28 @@ const Sidebar = ({ isOpen, onClose, hideByDefault = false }) => {
           <Link
             to="/messages"
             onClick={onClose}
-            className={`btn btn-ghost justify-start w-full gap-3 px-3 normal-case ${
+            className={`btn btn-ghost justify-start w-full gap-5 px-3 normal-case ${
               currentPath === "/messages" ? "btn-active" : ""
             }`}
           >
             <MessageSquareIcon className="size-5 opacity-70" />
-            <span>Messages</span>
+            <span className="flex-">Messages</span>
+            {totalUnread > 0 && (
+              <span className="badge badge-error badge-xs">{totalUnread}</span>
+            )}
           </Link>
           <Link
             to="/notifications"
             onClick={onClose}
-            className={`btn btn-ghost justify-start w-full gap-3 px-3 normal-case ${
+            className={`btn btn-ghost justify-start w-full gap-5 px-3 normal-case ${
               currentPath === "/notifications" ? "btn-active" : ""
             }`}
           >
             <BellIcon className="size-5 opacity-70" />
-            <span>Notifications</span>
+            <span className="flex-">Notifications</span>
+            {notificationCount > 0 && (
+              <span className="badge badge-error badge-xs">{notificationCount}</span>
+            )}
           </Link>
         </nav>
 

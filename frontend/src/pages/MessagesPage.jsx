@@ -33,30 +33,7 @@ const MessagesPage = () => {
   const [text, setText] = useState("");
   const [showChatOnMobile, setShowChatOnMobile] = useState(false);
 
-  //Load last chat from localStorage or from URL
-  useEffect(() => {
-    const friendId = searchParams.get("friendId");
-    if (friendId) {
-      const fetchFriendAndOpen = async () => {
-        try {
-          const res = await axiosInstance.get(`/users/friends`);
-          const friend = res.data.friends.find(f => f._id === friendId);
-          if (friend) {
-            setSelectedFriend(friend);
-            openChat(friend);
-          }
-        } catch {}
-      };
-      fetchFriendAndOpen();
-    } else {
-      const last = localStorage.getItem("lastChatFriend");
-      if (last) {
-        try {
-          setSelectedFriend(JSON.parse(last));
-        } catch {}
-      }
-    }
-  }, []);
+  const checkIsMobile = () => window.innerWidth < 768;
 
   useEffect(() => {
     const handleResize = () => {
@@ -96,14 +73,16 @@ const MessagesPage = () => {
         setUnread(unreadCounts);
 
         const friendId = searchParams.get("friendId");
-        const targetFriend = friendId 
-          ? list.find(f => f._id === friendId) 
-          : null;
-
-        if (targetFriend) {
-          setSelectedFriend(targetFriend);
-          openChat(targetFriend);
-        } else if (!selectedFriend && list.length > 0) {
+        
+        // If friendId in URL, open that chat (both desktop and mobile)
+        if (friendId) {
+          const targetFriend = list.find(f => f._id === friendId);
+          if (targetFriend) {
+            setSelectedFriend(targetFriend);
+            openChat(targetFriend);
+          }
+        } else if (!checkIsMobile() && !selectedFriend && list.length > 0) {
+          // Only auto-open on desktop when no friendId specified
           const last = localStorage.getItem("lastChatFriend");
           const parsed = last ? JSON.parse(last) : list[0];
           openChat(parsed);
@@ -146,8 +125,10 @@ const MessagesPage = () => {
     //Close mobile sidebar
     setMobileLeftOpen(false);
 
-    //Show chat on mobile
-    setShowChatOnMobile(true);
+    //Show chat on mobile when user clicks on a friend
+    if (checkIsMobile()) {
+      setShowChatOnMobile(true);
+    }
   };
 
   const goBackToContacts = () => {

@@ -8,6 +8,8 @@ import { useState, useEffect } from "react";
 import ConfirmModal from "../models/ConfirmModel";
 import ProfileInsetModal from "../models/ProfileInsetModel";
 import Sidebar from "./Sidebar";
+import { useQuery } from "@tanstack/react-query";
+import { getFriendRequests } from "../lib/api";
 
 const Navbar = ({ onMenuClick, hideSidebar = false }) => {
   const { authUser } = useAuthUser();
@@ -27,66 +29,75 @@ const Navbar = ({ onMenuClick, hideSidebar = false }) => {
 
   const showHamburger = isSmallScreen || isMessagesPage || hideSidebar;
 
+  const { data: friendRequests } = useQuery({
+    queryKey: ["friendRequests"],
+    queryFn: getFriendRequests,
+    refetchInterval: 30000,
+    enabled: !!authUser,
+  });
+
+  const unreadCount = friendRequests?.incomingReqs?.length || 0;
+
 
   return (
-    <nav className="bg-base-200 border-b border-base-300 sticky top-0 z-30 h-16 flex items-center">
-      {/* Hamburger Menu Button */}
-      {showHamburger && (
-        <button
-          className="my-3 sm:mx-3 btn btn-ghost btn-circle"
-          onClick={onMenuClick}
-        >
-          <Menu className="h-8 w-8" />
-        </button>
-      )}
-
-      <div className="container mx-auto sm:px-6 lg:px-8">
-        <div className="flex items-center justify-end gap-2 w-full">
-
-          <UserSearch />
-
-          <div className="flex items-center gap-3 sm:gap-5 sm:ml-auto">
-            <Link to={"/notifications"}>
-              <button className="btn btn-ghost btn-circle">
-                <BellIcon className="h-8 w-8 text-base-content opacity-80" />
-              </button>
-            </Link>
-          </div>
-
-          {/* TODO */}
-          <ThemeSelector />
-
-          <div
-            className="avatar cursor-pointer"
-            onClick={() => setOpenProfile(true)}
-          >
-            <div className="w-10 rounded-full">
-              <img src={authUser?.profilePic} alt={authUser.fullName} />
-            </div>
-          </div>
-
-          <ProfileInsetModal
-            isOpen={openProfile}
-            onClose={() => setOpenProfile(false)}
-          />
-
+    <nav className="bg-base-200 border-b border-base-300 sticky top-0 z-30 h-16 flex items-center px-2">
+      {/* Left side - Hamburger or placeholder to keep alignment */}
+      <div className="w-12 sm:w-14 flex-shrink-0">
+        {showHamburger && (
           <button
-            className="hidden sm:block btn btn-ghost btn-circle"
-            onClick={() => setOpen(true)}
+            className="btn btn-ghost btn-circle"
+            onClick={onMenuClick}
           >
-            <LogOutIcon className="h-9 w-9 text-base-content opacity-75" />
+            <Menu className="h-7 w-7" />
           </button>
+        )}
+      </div>
 
-          {/* ////////////////////// */}
-          <ConfirmModal
-            isOpen={open}
-            title="Confirm Logout"
-            message="Are you sure you want to log out?"
-            onCancel={() => setOpen(false)}
-            onConfirm={logoutMutation}
-          />
-          {/* //////////////////// */}
+      {/* Right side - All icons */}
+      <div className="flex items-center gap-2 sm:gap-3 ml-auto">
+        <UserSearch />
+
+        <Link to={"/notifications"} className="relative">
+          <button className="btn btn-ghost btn-circle">
+            <BellIcon className="h-7 w-7 text-base-content opacity-80" />
+          </button>
+          {unreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 badge badge-error badge-xs">
+              {unreadCount}
+            </span>
+          )}
+        </Link>
+
+        <ThemeSelector />
+
+        <div
+          className="avatar cursor-pointer"
+          onClick={() => setOpenProfile(true)}
+        >
+          <div className="w-10 rounded-full">
+            <img src={authUser?.profilePic} alt={authUser.fullName} />
+          </div>
         </div>
+
+        <ProfileInsetModal
+          isOpen={openProfile}
+          onClose={() => setOpenProfile(false)}
+        />
+
+        <button
+          className="hidden sm:block btn btn-ghost btn-circle"
+          onClick={() => setOpen(true)}
+        >
+          <LogOutIcon className="h-8 w-8 text-base-content opacity-75" />
+        </button>
+
+        <ConfirmModal
+          isOpen={open}
+          title="Confirm Logout"
+          message="Are you sure you want to log out?"
+          onCancel={() => setOpen(false)}
+          onConfirm={logoutMutation}
+        />
       </div>
     </nav>
   );

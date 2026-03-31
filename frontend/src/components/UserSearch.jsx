@@ -33,7 +33,11 @@ const UserSearch = () => {
     const value = e.target.value;
     setQuery(value);
 
-    if (!value) return setResults([]);
+    if (!value) {
+      setResults([]);
+      setSelectedUser(null);
+      return;
+    }
 
     const res = await axiosInstance.get(`/users/search?q=${value}`);
     setResults(res.data);
@@ -54,19 +58,23 @@ const UserSearch = () => {
           value={query}
           onChange={handleSearch}
           placeholder="Search users..."
-          className="input input-bordered w-28 sm:w-50"
+          className="input input-bordered w-33 sm:w-55"
         />
 
         {results.length > 0 && (
-          <div className="absolute w-full bg-base-100 border rounded mt-2 z-10">
+          <div className="absolute w-full bg-base-100 rounded mt-2 z-10">
             {results.map((user) => (
               <button
                 key={user._id}
-                onClick={() => setSelectedUser(user)}
+                onClick={() => {
+                  setSelectedUser(user);
+                  setResults([]);
+                  setQuery("");
+                }}
                 className="w-full flex items-center gap-3 p-2 hover:bg-base-200 text-left"
               >
                 <img src={user.profilePic} className="w-8 h-8 rounded-full" />
-                <span>{user.fullName}</span>
+                <span className="truncate">{user.fullName}</span>
               </button>
             ))}
           </div>
