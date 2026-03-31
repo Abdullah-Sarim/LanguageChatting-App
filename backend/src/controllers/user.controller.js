@@ -8,11 +8,6 @@ export async function getRecommendedUsers(req, res) {
     const currentUser = req.user;
     const { minRating, nativeLanguage, learningLanguage, bestMatch } = req.query;
 
-    console.log("=== getRecommendedUsers ===");
-    console.log("currentUser.nativeLanguage:", currentUser.nativeLanguage);
-    console.log("currentUser.learningLanguage:", currentUser.learningLanguage);
-    console.log("filters:", { minRating, nativeLanguage, learningLanguage, bestMatch });
-
     const query = {
       _id: { $ne: currentUserId },
       _id: { $nin: currentUser.friends },
@@ -30,8 +25,6 @@ export async function getRecommendedUsers(req, res) {
     }
 
     let recommendedUsers = await User.find(query).select("fullName profilePic nativeLanguage learningLanguage bio location averageRating totalRatings");
-
-    console.log("found users:", recommendedUsers.length);
 
     recommendedUsers = recommendedUsers.map(user => {
       let matchType = "none";
@@ -53,7 +46,6 @@ export async function getRecommendedUsers(req, res) {
 
     if (bestMatch === "true") {
       recommendedUsers = recommendedUsers.filter(user => user.matchType !== "none");
-      console.log("after bestMatch filter:", recommendedUsers.length);
     }
 
     recommendedUsers.sort((a, b) => {

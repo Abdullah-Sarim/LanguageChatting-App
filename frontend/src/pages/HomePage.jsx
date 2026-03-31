@@ -50,7 +50,6 @@ const HomePage = () => {
       if (filter === "bestMatch") params.append("bestMatch", "true");
       if (nativeFilter) params.append("nativeLanguage", nativeFilter);
       if (learningFilter) params.append("learningLanguage", learningFilter);
-      console.log("Fetching with params:", params.toString());
       return getRecommendedUsers(params.toString());
     },
     staleTime: 0,
