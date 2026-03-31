@@ -78,7 +78,7 @@ const Sidebar = ({ isOpen, onClose, hideByDefault = false }) => {
 
       <aside
         className={`
-    ${isOverlay ? "fixed" : "sticky"} top-0 left-0 z-40
+    ${isOverlay ? "fixed" : "sticky"} top-0 left-0 z-30
     h-screen
     w-64 lg:w-75
     bg-base-200 border-r border-base-300
@@ -87,7 +87,7 @@ const Sidebar = ({ isOpen, onClose, hideByDefault = false }) => {
     flex flex-col
   `}
       >
-        <div className="p-3.5 border-b border-base-300">
+        <div className="p-3.5 border-b border-base-300 h-15 md:h-17">
           <Link to="/" onClick={onClose} className="flex items-center gap-2.5">
             <ShipWheelIcon className="lg:size-10 size-8 text-primary" />
             <span className="lg:text-3xl text-2xl font-bold font-mono bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary  tracking-wider">

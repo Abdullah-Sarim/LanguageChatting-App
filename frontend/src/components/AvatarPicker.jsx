@@ -2,7 +2,7 @@ import { AVATARS } from "../constants/avatars";
 
 const AvatarPicker = ({ selectedAvatar, onSelect }) => {
   return (
-    <div className="grid grid-cols-5 gap-4">
+    <div className="flex overflow-x-auto gap-4 py-2 px-1">
       {AVATARS.map((avatar) => {
         const isSelected = selectedAvatar === avatar.src;
 
@@ -10,7 +10,7 @@ const AvatarPicker = ({ selectedAvatar, onSelect }) => {
           <button
             key={avatar.id}
             onClick={() => onSelect(avatar.src)}
-            className="relative focus:outline-none"
+            className="relative focus:outline-none flex-shrink-0"
             aria-pressed={isSelected}
           >
             {/* Selection ring */}

@@ -40,7 +40,7 @@ const Navbar = ({ onMenuClick, hideSidebar = false }) => {
 
 
   return (
-    <nav className="bg-base-200 border-b border-base-300 sticky top-0 z-30 h-16 flex items-center px-2">
+    <nav className="bg-base-200 border-b border-base-300 sticky top-0 z-30 h-15 md:h-17 flex items-center px-2">
       {/* Left side - Hamburger or placeholder to keep alignment */}
       <div className="w-12 sm:w-14 flex-shrink-0">
         {showHamburger && (

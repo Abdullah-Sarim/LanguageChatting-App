@@ -34,6 +34,8 @@ const HomePage = () => {
 
   const safeFriends = Array.isArray(friends) ? friends : [];
 
+  const pinnedFriends = JSON.parse(localStorage.getItem("pinnedFriends")) || [];
+  const pinnedFriendList = safeFriends.filter(friend => pinnedFriends.includes(friend._id));
 
   const { data: recommendedUsers = [], isLoading: loadingUsers } = useQuery({
     queryKey: ["users"],
@@ -61,7 +63,7 @@ const HomePage = () => {
     }
   }, [outgoingFriendReqs]);
 
-  const sortedFriends = [...safeFriends].sort((a, b) => {
+  const sortedFriends = [...pinnedFriendList].sort((a, b) => {
     const aOnline = client?.state?.users?.[a._id]?.online ? 1 : 0;
     const bOnline = client?.state?.users?.[b._id]?.online ? 1 : 0;
     return bOnline - aOnline;
@@ -73,7 +75,7 @@ const HomePage = () => {
       <div className=" container mx-auto space-y-10 min-h-screen">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
-            Your Friends
+            Pinned Friends
           </h2>
           
           <Link to="/notifications" className="btn btn-outline btn-sm">
@@ -86,7 +88,7 @@ const HomePage = () => {
           <div className="flex justify-center py-12">
             <span className="loading loading-spinner loading-lg" />
           </div>
-        ) : safeFriends.length === 0 ? (
+        ) : pinnedFriendList.length === 0 ? (
           <NoFriendsFound />
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">

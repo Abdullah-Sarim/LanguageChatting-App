@@ -3,6 +3,7 @@ import useAuthUser from "../hooks/useAuthUser";
 import useUpdateProfile from "../hooks/useUpdateProfile";
 import AvatarPicker from "../components/AvatarPicker";
 import { LANGUAGES } from "../constants";
+import { X } from "lucide-react";
 
 const EditProfileModal = ({ open, onClose }) => {
   const { authUser } = useAuthUser();
@@ -34,7 +35,13 @@ const EditProfileModal = ({ open, onClose }) => {
   return (
     <div className="modal modal-open">
       {/*scroll added here */}
-      <div className="modal-box max-h-[90vh] overflow-y-auto">
+      <div className="modal-box max-h-[90vh] overflow-y-auto relative">
+        <button
+          className="absolute top-4 right-4 btn btn-sm btn-circle btn-ghost"
+          onClick={onClose}
+        >
+          <X className="h-5 w-5" />
+        </button>
         <h3 className="font-bold text-lg">Edit Profile</h3>
 
         <div className="space-y-4 mt-4">
