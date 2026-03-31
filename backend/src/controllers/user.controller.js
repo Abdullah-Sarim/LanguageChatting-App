@@ -6,7 +6,12 @@ export async function getRecommendedUsers(req, res) {
   try {
     const currentUserId = req.user.id;
     const currentUser = req.user;
-    const { minRating, nativeLanguage, learningLanguage } = req.query;
+    const { minRating, nativeLanguage, learningLanguage, bestMatch } = req.query;
+
+    console.log("=== getRecommendedUsers ===");
+    console.log("currentUser.nativeLanguage:", currentUser.nativeLanguage);
+    console.log("currentUser.learningLanguage:", currentUser.learningLanguage);
+    console.log("filters:", { minRating, nativeLanguage, learningLanguage, bestMatch });
 
     const query = {
       _id: { $ne: currentUserId },
@@ -15,10 +20,10 @@ export async function getRecommendedUsers(req, res) {
     };
 
     if (nativeLanguage) {
-      query.nativeLanguage = nativeLanguage;
+      query.nativeLanguage = { $regex: new RegExp(`^${nativeLanguage}$`, 'i') };
     }
     if (learningLanguage) {
-      query.learningLanguage = learningLanguage;
+      query.learningLanguage = { $regex: new RegExp(`^${learningLanguage}$`, 'i') };
     }
     if (minRating) {
       query.averageRating = { $gte: parseFloat(minRating) };
@@ -26,22 +31,36 @@ export async function getRecommendedUsers(req, res) {
 
     let recommendedUsers = await User.find(query).select("fullName profilePic nativeLanguage learningLanguage bio location averageRating totalRatings");
 
+    console.log("found users:", recommendedUsers.length);
+
     recommendedUsers = recommendedUsers.map(user => {
       let matchType = "none";
       
-      if (user.nativeLanguage === currentUser.learningLanguage && user.nativeLanguage) {
+      const userNative = user.nativeLanguage?.toLowerCase();
+      const userLearning = user.learningLanguage?.toLowerCase();
+      const currentNative = currentUser.nativeLanguage?.toLowerCase();
+      const currentLearning = currentUser.learningLanguage?.toLowerCase();
+      
+      if (userNative === currentLearning && userNative && currentLearning) {
         matchType = "teaching";
       }
-      if (user.learningLanguage === currentUser.nativeLanguage && user.learningLanguage) {
+      if (userLearning === currentNative && userLearning && currentNative) {
         matchType = matchType === "teaching" ? "perfect" : "learning";
       }
       
       return { ...user.toObject(), matchType };
     });
 
+    if (bestMatch === "true") {
+      recommendedUsers = recommendedUsers.filter(user => user.matchType !== "none");
+      console.log("after bestMatch filter:", recommendedUsers.length);
+    }
+
     recommendedUsers.sort((a, b) => {
       const order = { perfect: 0, teaching: 1, learning: 2, none: 3 };
-      return (order[a.matchType] || 3) - (order[b.matchType] || 3);
+      const orderDiff = (order[a.matchType] || 3) - (order[b.matchType] || 3);
+      if (orderDiff !== 0) return orderDiff;
+      return (b.averageRating || 0) - (a.averageRating || 0);
     });
 
     res.status(200).json(recommendedUsers);

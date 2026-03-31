@@ -42,23 +42,18 @@ const HomePage = () => {
   const safeFriends = Array.isArray(friends) ? friends : [];
   const pinnedFriendList = safeFriends.filter(friend => pinnedFriends.includes(friend._id));
 
-  const buildQueryKey = () => {
-    const key = ["users"];
-    if (filter === "topRated") key.push("topRated");
-    if (nativeFilter) key.push(`native:${nativeFilter}`);
-    if (learningFilter) key.push(`learning:${learningFilter}`);
-    return key;
-  };
-
-  const { data: recommendedUsers = [], isLoading: loadingUsers, refetch } = useQuery({
-    queryKey: buildQueryKey(),
-    queryFn: () => {
+  const { data: recommendedUsers = [], isLoading: loadingUsers } = useQuery({
+    queryKey: ["users", filter, nativeFilter, learningFilter],
+    queryFn: async () => {
       const params = new URLSearchParams();
       if (filter === "topRated") params.append("minRating", "3");
+      if (filter === "bestMatch") params.append("bestMatch", "true");
       if (nativeFilter) params.append("nativeLanguage", nativeFilter);
       if (learningFilter) params.append("learningLanguage", learningFilter);
+      console.log("Fetching with params:", params.toString());
       return getRecommendedUsers(params.toString());
     },
+    staleTime: 0,
   });
 
   const { data: outgoingFriendReqs } = useQuery({
@@ -92,14 +87,12 @@ const HomePage = () => {
     setFilter(newFilter);
     setNativeFilter("");
     setLearningFilter("");
-    refetch();
   };
 
   const handleClearFilters = () => {
     setFilter("all");
     setNativeFilter("");
     setLearningFilter("");
-    refetch();
   };
   
   return (
@@ -234,9 +227,22 @@ const HomePage = () => {
                         </div>
 
                         <div>
-                          <h3 className="font-semibold text-lg">
-                            {user.fullName}
-                          </h3>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h3 className="font-semibold text-lg">
+                              {user.fullName}
+                            </h3>
+                            {user.matchType && user.matchType !== "none" && (
+                              <span className={`badge badge-sm ${
+                                user.matchType === "perfect" ? "badge-success" :
+                                user.matchType === "teaching" ? "badge-warning" :
+                                "badge-info"
+                              }`}>
+                                {user.matchType === "perfect" ? "★ Perfect" :
+                                 user.matchType === "teaching" ? "Teaches You" :
+                                 "Learns Your Lang"}
+                              </span>
+                            )}
+                          </div>
                           {user.location && (
                             <div className="flex items-center text-xs opacity-70 mt-1">
                               <MapPinIcon className="size-3 mr-1" />
