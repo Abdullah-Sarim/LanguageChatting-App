@@ -22,6 +22,7 @@ import UserSearch from "../components/UserSearch";
 import NoFriendsFound from "../components/NoFriendsFound";
 import { useStreamChat } from "../context/StreamChatContext";
 import { usePinnedFriends } from "../context/PinnedFriendsContext";
+import { LANGUAGES } from "../constants";
 
 const HomePage = () => {
   const { client } = useStreamChat();
@@ -29,6 +30,9 @@ const HomePage = () => {
 
   const queryClient = useQueryClient();
   const [outgoingRequestsIds, setOutgoingRequestsIds] = useState(new Set());
+  const [filter, setFilter] = useState("all");
+  const [nativeFilter, setNativeFilter] = useState("");
+  const [learningFilter, setLearningFilter] = useState("");
 
   const { data: friends = [], isLoading: loadingFriends } = useQuery({
     queryKey: ["friends"],
@@ -38,9 +42,23 @@ const HomePage = () => {
   const safeFriends = Array.isArray(friends) ? friends : [];
   const pinnedFriendList = safeFriends.filter(friend => pinnedFriends.includes(friend._id));
 
-  const { data: recommendedUsers = [], isLoading: loadingUsers } = useQuery({
-    queryKey: ["users"],
-    queryFn: getRecommendedUsers,
+  const buildQueryKey = () => {
+    const key = ["users"];
+    if (filter === "topRated") key.push("topRated");
+    if (nativeFilter) key.push(`native:${nativeFilter}`);
+    if (learningFilter) key.push(`learning:${learningFilter}`);
+    return key;
+  };
+
+  const { data: recommendedUsers = [], isLoading: loadingUsers, refetch } = useQuery({
+    queryKey: buildQueryKey(),
+    queryFn: () => {
+      const params = new URLSearchParams();
+      if (filter === "topRated") params.append("minRating", "3");
+      if (nativeFilter) params.append("nativeLanguage", nativeFilter);
+      if (learningFilter) params.append("learningLanguage", learningFilter);
+      return getRecommendedUsers(params.toString());
+    },
   });
 
   const { data: outgoingFriendReqs } = useQuery({
@@ -70,6 +88,19 @@ const HomePage = () => {
     return bOnline - aOnline;
   });
   
+  const handleFilterChange = (newFilter) => {
+    setFilter(newFilter);
+    setNativeFilter("");
+    setLearningFilter("");
+    refetch();
+  };
+
+  const handleClearFilters = () => {
+    setFilter("all");
+    setNativeFilter("");
+    setLearningFilter("");
+    refetch();
+  };
   
   return (
     <div className="p-4 sm:p-6 lg:p-8">
@@ -100,18 +131,74 @@ const HomePage = () => {
         )}
 
         <section>
-          <div className="mb-6 sm:mb-8">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div>
-                <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
-                  Meet New Learners
-                </h2>
-                <p className="opacity-70">
-                  Discover perfect language exchange partners based on your
-                  profile
-                </p>
-              </div>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+            <div>
+              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
+                Meet New Learners
+              </h2>
+              <p className="opacity-70">
+                Discover perfect language exchange partners based on your
+                profile
+              </p>
             </div>
+          </div>
+
+          <div className="flex flex-wrap gap-2 mb-4">
+            <button
+              className={`btn btn-sm ${filter === "all" ? "btn-primary" : "btn-outline"}`}
+              onClick={() => handleFilterChange("all")}
+            >
+              All Users
+            </button>
+            <button
+              className={`btn btn-sm ${filter === "bestMatch" ? "btn-primary" : "btn-outline"}`}
+              onClick={() => handleFilterChange("bestMatch")}
+            >
+              Best Match
+            </button>
+            <button
+              className={`btn btn-sm ${filter === "topRated" ? "btn-primary" : "btn-outline"}`}
+              onClick={() => handleFilterChange("topRated")}
+            >
+              Top Rated 3+ ⭐
+            </button>
+            {(filter !== "all" || nativeFilter || learningFilter) && (
+              <button
+                className="btn btn-sm btn-ghost"
+                onClick={handleClearFilters}
+              >
+                Clear Filters
+              </button>
+            )}
+          </div>
+
+          <div className="flex flex-wrap gap-2 mb-6">
+            <select
+              className="select select-bordered select-sm"
+              value={nativeFilter}
+              onChange={(e) => {
+                setNativeFilter(e.target.value);
+                setFilter("all");
+              }}
+            >
+              <option value="">Native Language</option>
+              {LANGUAGES.map((lang) => (
+                <option key={lang} value={lang}>{lang}</option>
+              ))}
+            </select>
+            <select
+              className="select select-bordered select-sm"
+              value={learningFilter}
+              onChange={(e) => {
+                setLearningFilter(e.target.value);
+                setFilter("all");
+              }}
+            >
+              <option value="">Learning Language</option>
+              {LANGUAGES.map((lang) => (
+                <option key={lang} value={lang}>{lang}</option>
+              ))}
+            </select>
           </div>
 
           {loadingUsers ? (
@@ -133,7 +220,7 @@ const HomePage = () => {
                 const hasRequestBeenSent =
                 outgoingRequestsIds instanceof Set &&
                 outgoingRequestsIds.has(user._id);
-              
+               
 
                 return (
                   <div

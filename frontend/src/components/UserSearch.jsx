@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import useAuthUser from "../hooks/useAuthUser";
 import { useQuery } from "@tanstack/react-query";
 import { axiosInstance } from "../lib/axios";
@@ -11,6 +11,7 @@ const UserSearch = () => {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
+  const searchRef = useRef(null);
 
   const queryClient = useQueryClient();
 
@@ -28,6 +29,18 @@ const UserSearch = () => {
       setSelectedUser(null);
     },
   });
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (searchRef.current && !searchRef.current.contains(event.target)) {
+        setResults([]);
+        setQuery("");
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleSearch = async (e) => {
     const value = e.target.value;
@@ -52,7 +65,7 @@ const UserSearch = () => {
   return (
     <>
       <UserRoundSearch className="hidden sm:block"/>
-      <div className="relative">
+      <div className="relative" ref={searchRef}>
         <input
           type="text"
           value={query}

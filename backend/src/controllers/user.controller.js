@@ -6,14 +6,44 @@ export async function getRecommendedUsers(req, res) {
   try {
     const currentUserId = req.user.id;
     const currentUser = req.user;
+    const { minRating, nativeLanguage, learningLanguage } = req.query;
 
-    const recommendedUsers = await User.find({
-      $and: [
-        { _id: { $ne: currentUserId } }, //exclude current user
-        { _id: { $nin: currentUser.friends } }, // exclude current user's friends
-        { isOnboarded: true },
-      ],
-    }).select("fullName profilePic nativeLanguage learningLanguage bio location averageRating totalRatings");
+    const query = {
+      _id: { $ne: currentUserId },
+      _id: { $nin: currentUser.friends },
+      isOnboarded: true,
+    };
+
+    if (nativeLanguage) {
+      query.nativeLanguage = nativeLanguage;
+    }
+    if (learningLanguage) {
+      query.learningLanguage = learningLanguage;
+    }
+    if (minRating) {
+      query.averageRating = { $gte: parseFloat(minRating) };
+    }
+
+    let recommendedUsers = await User.find(query).select("fullName profilePic nativeLanguage learningLanguage bio location averageRating totalRatings");
+
+    recommendedUsers = recommendedUsers.map(user => {
+      let matchType = "none";
+      
+      if (user.nativeLanguage === currentUser.learningLanguage && user.nativeLanguage) {
+        matchType = "teaching";
+      }
+      if (user.learningLanguage === currentUser.nativeLanguage && user.learningLanguage) {
+        matchType = matchType === "teaching" ? "perfect" : "learning";
+      }
+      
+      return { ...user.toObject(), matchType };
+    });
+
+    recommendedUsers.sort((a, b) => {
+      const order = { perfect: 0, teaching: 1, learning: 2, none: 3 };
+      return (order[a.matchType] || 3) - (order[b.matchType] || 3);
+    });
+
     res.status(200).json(recommendedUsers);
   } catch (error) {
     console.error("Error in getRecommendedUsers controller", error.message);

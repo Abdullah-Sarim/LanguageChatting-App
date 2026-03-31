@@ -58,8 +58,9 @@ export const getUserFriends = async () => {
 };
 
 
-export async function getRecommendedUsers() {
-  const response = await axiosInstance.get("/users");
+export async function getRecommendedUsers(params = "") {
+  const url = params ? `/users?${params}` : "/users";
+  const response = await axiosInstance.get(url);
   return response.data;
 }
 
