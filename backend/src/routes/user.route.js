@@ -12,6 +12,7 @@ import {
   removeFriend,
   searchUsers,
   blockUser,
+  rateUser,
 } from "../controllers/user.controller.js";
 
 const router = express.Router();
@@ -31,6 +32,7 @@ router.put("/friend-request/:id/reject", rejectFriendRequest);
 router.put("/profile", updatedUser)
 
 router.put("/block/:userId", blockUser);
+router.put("/rate/:userId", rateUser);
 
 router.get("/friend-requests", getFriendRequests);
 router.get("/outgoing-friend-requests", getOutgoingFriendReqs);

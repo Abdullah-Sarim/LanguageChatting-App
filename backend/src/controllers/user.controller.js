@@ -1,5 +1,6 @@
 import User from "../models/User.js";
 import FriendRequest from "../models/FriendRequest.js";
+import Rating from "../models/Rating.js";
 
 export async function getRecommendedUsers(req, res) {
   try {
@@ -12,7 +13,7 @@ export async function getRecommendedUsers(req, res) {
         { _id: { $nin: currentUser.friends } }, // exclude current user's friends
         { isOnboarded: true },
       ],
-    });
+    }).select("fullName profilePic nativeLanguage learningLanguage bio location averageRating totalRatings");
     res.status(200).json(recommendedUsers);
   } catch (error) {
     console.error("Error in getRecommendedUsers controller", error.message);
@@ -26,7 +27,7 @@ export async function getMyFriends(req, res) {
       .select("friends")
       .populate(
         "friends",
-        "fullName profilePic nativeLanguage learningLanguage"
+        "fullName profilePic nativeLanguage learningLanguage averageRating totalRatings"
       );
 
     res.status(200).json({
@@ -51,7 +52,7 @@ export const searchUsers = async (req, res) => {
     fullName: { $regex: q, $options: "i" },
     _id: { $ne: req.user.id },
   })
-    .select("fullName profilePic nativeLanguage learningLanguage")
+    .select("fullName profilePic nativeLanguage learningLanguage averageRating totalRatings")
     .limit(10);
 
   res.json(users);
@@ -349,13 +350,13 @@ export async function getFriendRequests(req, res) {
       status: "pending",
     }).populate(
       "sender",
-      "fullName profilePic nativeLanguage learningLanguage"
+      "fullName profilePic nativeLanguage learningLanguage averageRating totalRatings"
     );
 
     const acceptedReqs = await FriendRequest.find({
       sender: req.user.id,
       status: "accepted",
-    }).populate("recipient", "fullName profilePic");
+    }).populate("recipient", "fullName profilePic averageRating totalRatings");
 
     res.status(200).json({ incomingReqs, acceptedReqs });
   } catch (error) {
@@ -371,7 +372,7 @@ export async function getOutgoingFriendReqs(req, res) {
       status: "pending",
     }).populate(
       "recipient",
-      "fullName profilePic nativeLanguage learningLanguage"
+      "fullName profilePic nativeLanguage learningLanguage averageRating totalRatings"
     );
 
     res.status(200).json(outgoingRequests);
@@ -450,3 +451,78 @@ export async function blockUser(req, res) {
     res.status(500).json({ message: "Internal Server Error" });
   }
 }
+
+async function updateUserRating(userId) {
+  const ratings = await Rating.find({ ratedUser: userId });
+  
+  if (ratings.length === 0) {
+    await User.findByIdAndUpdate(userId, {
+      averageRating: 0,
+      totalRatings: 0,
+    });
+    return;
+  }
+
+  const total = ratings.reduce((sum, r) => sum + r.rating, 0);
+  const average = total / ratings.length;
+
+  await User.findByIdAndUpdate(userId, {
+    averageRating: Math.round(average * 10) / 10,
+    totalRatings: ratings.length,
+  });
+}
+
+export const rateUser = async (req, res) => {
+  try {
+    const raterId = req.user.id;
+    const { userId: ratedUserId } = req.params;
+    const { rating } = req.body;
+
+    if (raterId === ratedUserId) {
+      return res.status(400).json({ message: "You cannot rate yourself" });
+    }
+
+    if (!rating || rating < 1 || rating > 5) {
+      return res.status(400).json({ message: "Rating must be between 1 and 5" });
+    }
+
+    const ratedUser = await User.findById(ratedUserId);
+    if (!ratedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const currentUser = await User.findById(raterId);
+    if (!currentUser.friends.includes(ratedUserId)) {
+      return res.status(403).json({ message: "You can only rate friends" });
+    }
+
+    const existingRating = await Rating.findOne({
+      rater: raterId,
+      ratedUser: ratedUserId,
+    });
+
+    if (existingRating) {
+      existingRating.rating = rating;
+      await existingRating.save();
+    } else {
+      await Rating.create({
+        rater: raterId,
+        ratedUser: ratedUserId,
+        rating,
+      });
+    }
+
+    await updateUserRating(ratedUserId);
+
+    const updatedUser = await User.findById(ratedUserId).select("averageRating totalRatings");
+
+    res.status(200).json({
+      message: existingRating ? "Rating updated" : "Rating submitted",
+      averageRating: updatedUser.averageRating,
+      totalRatings: updatedUser.totalRatings,
+    });
+  } catch (error) {
+    console.error("Error in rateUser controller", error.message);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};

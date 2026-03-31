@@ -12,6 +12,7 @@ import {
   MapPinIcon,
   UserPlusIcon,
   UsersIcon,
+  Star,
 } from "lucide-react";
 
 import { capitialize } from "../lib/utils";
@@ -20,9 +21,11 @@ import FriendCard, { getLanguageFlag } from "../components/FriendCard";
 import UserSearch from "../components/UserSearch";
 import NoFriendsFound from "../components/NoFriendsFound";
 import { useStreamChat } from "../context/StreamChatContext";
+import { usePinnedFriends } from "../context/PinnedFriendsContext";
 
 const HomePage = () => {
   const { client } = useStreamChat();
+  const { pinnedFriends } = usePinnedFriends();
 
   const queryClient = useQueryClient();
   const [outgoingRequestsIds, setOutgoingRequestsIds] = useState(new Set());
@@ -33,8 +36,6 @@ const HomePage = () => {
   });
 
   const safeFriends = Array.isArray(friends) ? friends : [];
-
-  const pinnedFriends = JSON.parse(localStorage.getItem("pinnedFriends")) || [];
   const pinnedFriendList = safeFriends.filter(friend => pinnedFriends.includes(friend._id));
 
   const { data: recommendedUsers = [], isLoading: loadingUsers } = useQuery({
@@ -172,6 +173,17 @@ const HomePage = () => {
 
                       {user.bio && (
                         <p className="text-sm opacity-70">{user.bio}</p>
+                      )}
+
+                      {/* Rating Display */}
+                      {(user.averageRating > 0 || user.totalRatings > 0) && (
+                        <div className="flex items-center gap-1">
+                          <Star className="fill-yellow-400 text-yellow-400 w-4 h-4" />
+                          <span className="text-sm font-medium">{user.averageRating}</span>
+                          <span className="text-xs text-base-content/60">
+                            ({user.totalRatings})
+                          </span>
+                        </div>
                       )}
 
                       {/* Action button */}

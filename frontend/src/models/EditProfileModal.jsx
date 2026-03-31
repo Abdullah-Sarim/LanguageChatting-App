@@ -3,7 +3,7 @@ import useAuthUser from "../hooks/useAuthUser";
 import useUpdateProfile from "../hooks/useUpdateProfile";
 import AvatarPicker from "../components/AvatarPicker";
 import { LANGUAGES } from "../constants";
-import { X } from "lucide-react";
+import { X, Star } from "lucide-react";
 
 const EditProfileModal = ({ open, onClose }) => {
   const { authUser } = useAuthUser();
@@ -46,12 +46,33 @@ const EditProfileModal = ({ open, onClose }) => {
 
         <div className="space-y-4 mt-4">
           {/* Avatar */}
-          <AvatarPicker
-            selected={form.profilePic}
-            onSelect={(avatar) =>
-              setForm({ ...form, profilePic: avatar })
-            }
-          />
+          <div className="flex flex-col items-center">
+            <div className="avatar mb-4">
+              <div className="w-24 rounded-full ring ring-primary ring-offset-2">
+                <img src={form.profilePic} alt="Current avatar" />
+              </div>
+            </div>
+            <p className="text-sm text-base-content/60 mb-2">Select a new avatar:</p>
+            <AvatarPicker
+              selectedAvatar={form.profilePic}
+              onSelect={(avatar) =>
+                setForm({ ...form, profilePic: avatar })
+              }
+            />
+          </div>
+
+          {/* Rating Display */}
+          {(authUser.averageRating || authUser.totalRatings) && (
+            <div className="flex items-center justify-center gap-2 p-3 bg-base-100 rounded-lg">
+              <Star className="fill-yellow-400 text-yellow-400" size={24} />
+              <span className="font-semibold text-xl">
+                {authUser.averageRating || 0}
+              </span>
+              <span className="text-base-content/60">
+                ({authUser.totalRatings || 0} {authUser.totalRatings === 1 ? "rating" : "ratings"})
+              </span>
+            </div>
+          )}
 
           {/* Full Name */}
           <input

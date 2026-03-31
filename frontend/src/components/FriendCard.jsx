@@ -1,10 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link } from "react-router";
 import { useChatContext } from "stream-chat-react";
 import { LANGUAGE_TO_FLAG } from "../constants";
-import { EllipsisVertical, Pin, PinOff } from "lucide-react";
+import { EllipsisVertical, Pin, PinOff, Star } from "lucide-react";
 import { blockUser } from "../lib/api";
 import toast from "react-hot-toast";
+import { axiosInstance } from "../lib/axios";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { usePinnedFriends } from "../context/PinnedFriendsContext";
 
 const FriendCard = ({
   friend,
@@ -13,26 +16,17 @@ const FriendCard = ({
   showActions = false,
 }) => {
   const { client } = useChatContext();
-  const [pinnedFriends, setPinnedFriends] = useState([]);
+  const queryClient = useQueryClient();
+  const { togglePin: updatePin, isPinned: checkIsPinned } = usePinnedFriends();
   const [isBlocking, setIsBlocking] = useState(false);
+  const [hoverRating, setHoverRating] = useState(0);
 
-  useEffect(() => {
-    const pinned = JSON.parse(localStorage.getItem("pinnedFriends")) || [];
-    setPinnedFriends(pinned);
-  }, []);
+  const isPinned = checkIsPinned(friend._id);
 
-  const isPinned = pinnedFriends.includes(friend._id);
-
-  const togglePin = (e) => {
+  const handleTogglePin = (e) => {
     e.preventDefault();
     e.stopPropagation();
-
-    const updated = isPinned
-      ? pinnedFriends.filter((id) => id !== friend._id)
-      : [...pinnedFriends, friend._id];
-
-    localStorage.setItem("pinnedFriends", JSON.stringify(updated));
-    setPinnedFriends(updated);
+    updatePin(friend._id);
   };
 
   const handleBlock = async (e) => {
@@ -51,6 +45,23 @@ const FriendCard = ({
     } finally {
       setIsBlocking(false);
     }
+  };
+
+  const { mutate: rateUser, isPending: isRating } = useMutation({
+    mutationFn: ({ userId, rating }) =>
+      axiosInstance.put(`/users/rate/${userId}`, { rating }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["friends"] });
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      toast.success("Rating submitted!");
+    },
+    onError: () => {
+      toast.error("Failed to submit rating");
+    },
+  });
+
+  const handleRate = (rating) => {
+    rateUser({ userId: friend._id, rating });
   };
 
   /* STREAM PRESENCE*/
@@ -87,7 +98,7 @@ const FriendCard = ({
     <div className="card bg-base-200 hover:shadow-md transition-shadow relative">
       {/*Pin Button */}
       <button
-        onClick={togglePin}
+        onClick={handleTogglePin}
         className="absolute top-2 right-8 btn btn-ghost btn-xs"
         title={isPinned ? "Unpin friend" : "Pin friend"}
       >
@@ -147,6 +158,46 @@ const FriendCard = ({
             {getLanguageFlag(friend.learningLanguage)}
             Learning: {friend.learningLanguage}
           </span>
+        </div>
+
+        {/* RATING */}
+        <div className="flex items-center gap-1 mb-3">
+          {[1, 2, 3, 4, 5].map((star) => (
+            <button
+              key={star}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleRate(star);
+              }}
+              disabled={isRating}
+              className="focus:outline-none"
+            >
+              <Star
+                size={18}
+                className={`transition-colors ${
+                  star <= (hoverRating || friend.averageRating)
+                    ? "fill-yellow-400 text-yellow-400"
+                    : "text-base-content/30"
+                }`}
+                onMouseEnter={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setHoverRating(star);
+                }}
+                onMouseLeave={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setHoverRating(0);
+                }}
+              />
+            </button>
+          ))}
+          {friend.totalRatings > 0 && (
+            <span className="text-xs text-base-content/60 ml-1">
+              ({friend.totalRatings})
+            </span>
+          )}
         </div>
 
         {/* ACTION */}

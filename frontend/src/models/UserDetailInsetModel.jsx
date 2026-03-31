@@ -1,8 +1,34 @@
-import { X } from "lucide-react";
+import { X, Star } from "lucide-react";
 import { useState } from "react";
 import { getLanguageFlag } from "../components/FriendCard";
 import { capitialize } from "../lib/utils";
 import { useNavigate } from "react-router";
+import { axiosInstance } from "../lib/axios";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import useAuthUser from "../hooks/useAuthUser";
+
+const StarRating = ({ rating, onRate, readonly = false }) => {
+  const [hover, setHover] = useState(0);
+
+  return (
+    <div className="flex gap-1 justify-center">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <Star
+          key={star}
+          size={24}
+          className={`transition-colors ${
+            star <= (hover || rating)
+              ? "fill-yellow-400 text-yellow-400"
+              : "text-base-content/30"
+          } ${!readonly ? "cursor-pointer" : ""}`}
+          onClick={() => !readonly && onRate(star)}
+          onMouseEnter={() => !readonly && setHover(star)}
+          onMouseLeave={() => !readonly && setHover(0)}
+        />
+      ))}
+    </div>
+  );
+};
 
 const UserProfileInsetModal = ({
   isOpen,
@@ -14,6 +40,23 @@ const UserProfileInsetModal = ({
   hasPendingRequest,
 }) => {
   const navigate = useNavigate();
+  const { authUser } = useAuthUser();
+  const queryClient = useQueryClient();
+  const [userRating, setUserRating] = useState(0);
+
+  const { mutate: rateUser, isPending: isRating } = useMutation({
+    mutationFn: ({ userId, rating }) =>
+      axiosInstance.put(`/users/rate/${userId}`, { rating }),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["friends"] });
+      queryClient.invalidateQueries({ queryKey: ["outgoingFriendReqs"] });
+    },
+  });
+
+  const handleRate = (rating) => {
+    setUserRating(rating);
+    rateUser({ userId: user._id, rating });
+  };
 
   if (!isOpen || !user) return null;
 
@@ -44,6 +87,37 @@ const UserProfileInsetModal = ({
 
             {/* Name */}
             <h2 className="text-[25px] font-bold">{user.fullName}</h2>
+
+            {/* Rating Display - always show if user has ratings */}
+            {(user.averageRating || user.totalRatings) && (
+              <div className="mt-2">
+                <div className="flex items-center justify-center gap-2">
+                  <Star className="fill-yellow-400 text-yellow-400" size={20} />
+                  <span className="font-semibold text-lg">
+                    {user.averageRating || 0}
+                  </span>
+                  <span className="text-base-content/60">
+                    ({user.totalRatings || 0} {user.totalRatings === 1 ? "rating" : "ratings"})
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Rate Friend (only if friend and not self) */}
+            {isFriend && authUser?._id !== user._id && (
+              <div className="mt-3">
+                <p className="text-sm text-base-content/60 mb-1">Rate this friend</p>
+                <StarRating rating={userRating} onRate={handleRate} />
+              </div>
+            )}
+
+            {/* Always show rating for non-friends if they have ratings */}
+            {!isFriend && (user.averageRating > 0 || user.totalRatings > 0) && (
+              <div className="mt-3">
+                <p className="text-sm text-base-content/60 mb-1">Community Rating</p>
+                <StarRating rating={user.averageRating} readonly={true} />
+              </div>
+            )}
 
             {/* Bio */}
             <p className="text-[16px] text-base-content/75 my-2">

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { acceptFriendRequest, rejectFriendRequest, getFriendRequests } from "../lib/api";
-import { BellIcon, ClockIcon, MessageSquareIcon, UserCheckIcon, X } from "lucide-react";
+import { BellIcon, ClockIcon, MessageSquareIcon, UserCheckIcon, X, Star } from "lucide-react";
 import NoNotificationsFound from "../components/NoNotificationsFound";
 
 const NotificationsPage = () => {
@@ -62,6 +62,13 @@ const NotificationsPage = () => {
                             </div>
                             <div>
                               <h3 className="font-semibold">{request.sender.fullName}</h3>
+                              {(request.sender.averageRating > 0 || request.sender.totalRatings > 0) && (
+                                <div className="flex items-center gap-1 mt-1">
+                                  <Star className="fill-yellow-400 text-yellow-400 w-3 h-3" />
+                                  <span className="text-xs font-medium">{request.sender.averageRating}</span>
+                                  <span className="text-xs text-base-content/60">({request.sender.totalRatings})</span>
+                                </div>
+                              )}
                               <div className="flex flex-wrap gap-1.5 mt-1">
                                 <span className="badge badge-secondary badge-sm">
                                   Native: {request.sender.nativeLanguage}
@@ -118,6 +125,13 @@ const NotificationsPage = () => {
                           </div>
                           <div className="flex-1">
                             <h3 className="font-semibold">{notification.recipient.fullName}</h3>
+                            {(notification.recipient.averageRating > 0 || notification.recipient.totalRatings > 0) && (
+                              <div className="flex items-center gap-1 mt-1">
+                                <Star className="fill-yellow-400 text-yellow-400 w-3 h-3" />
+                                <span className="text-xs font-medium">{notification.recipient.averageRating}</span>
+                                <span className="text-xs text-base-content/60">({notification.recipient.totalRatings})</span>
+                              </div>
+                            )}
                             <p className="text-sm my-1">
                               {notification.recipient.fullName} accepted your friend request
                             </p>

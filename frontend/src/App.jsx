@@ -16,6 +16,7 @@ import Layout from "./components/Layout.jsx";
 import { useThemeStore } from "./store/useThemeStore.js";
 import { StreamChatProvider } from "./context/StreamChatContext.jsx";
 import FriendsPage from "./pages/FriendsPage.jsx";
+import { PinnedFriendsProvider } from "./context/PinnedFriendsContext.jsx";
 
 const App = () => {
   const { isLoading, authUser } = useAuthUser();
@@ -28,7 +29,8 @@ const App = () => {
 
   return (
     <div className="min-h-screen" data-theme={theme}>
-      <Routes>
+      <PinnedFriendsProvider>
+        <Routes>
         <Route path="*" element={<Navigate to="/" />} />
         <Route
           path="/"
@@ -142,6 +144,7 @@ const App = () => {
       </Routes>
 
       <Toaster />
+      </PinnedFriendsProvider>
     </div>
   );
 };

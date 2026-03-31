@@ -1,4 +1,4 @@
-import { X } from "lucide-react";
+import { X, Star } from "lucide-react";
 import useAuthUser from "../hooks/useAuthUser";
 import EditProfileModal from "./EditProfileModal";
 import { useState } from "react";
@@ -46,6 +46,19 @@ const ProfileInsetModal = ({ isOpen, onClose }) => {
             
             <span className="text-green-500 font-semibold "><span className="size-2 rounded-full bg-success inline-block mr-1" />
               Online</span>
+
+            {/* Rating Display */}
+            {(authUser.averageRating || authUser.totalRatings) && (
+              <div className="flex items-center justify-center gap-2 mt-2">
+                <Star className="fill-yellow-400 text-yellow-400" size={24} />
+                <span className="font-semibold text-lg">
+                  {authUser.averageRating || 0}
+                </span>
+                <span className="text-base-content/60">
+                  ({authUser.totalRatings || 0} {authUser.totalRatings === 1 ? "rating" : "ratings"})
+                </span>
+              </div>
+            )}
             {/* Bio */}
             <p className="text-[16px] text-base-content/75 my-2">
               {authUser.bio || "No bio added"}
