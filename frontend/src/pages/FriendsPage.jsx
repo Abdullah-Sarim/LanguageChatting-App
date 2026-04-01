@@ -59,7 +59,12 @@ const FriendsPage = () => {
       <h1 className="text-xl font-bold mb-4">Friends</h1>
 
       {sortedFriends.length === 0 ? (
-        <p>No friends yet </p>
+        <div className="card bg-base-200 p-6 text-center h-full">
+        <h3 className="font-semibold text-lg mb-2">No friends yet</h3>
+        <p className="text-base-content opacity-70">
+          Connect with language partners to start practicing together!
+        </p>
+      </div>
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {sortedFriends.map((friend) => (

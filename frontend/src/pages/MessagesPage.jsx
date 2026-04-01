@@ -228,47 +228,58 @@ const MessagesPage = () => {
 
   {/*SCROLLABLE FRIEND LIST */}
   <div className="flex-1 overflow-y-auto py-2 px-2.5">
-    {filteredFriends.map((f) => {
-      const { status, text: statusText } = getFriendStatus(f);
-      const isOnline = status === "online";
-
-      return (
-      <div
-        key={f._id}
-        onClick={() => openChat(f)}
-        className={`flex items-center gap-4 p-3 cursor-pointer transition ${
-          selectedFriend?._id === f._id
-            ? "bg-base-200 rounded-2xl"
-            : "hover:bg-base-200 rounded-2xl"
-        }`}
-      >
-        <div className="relative">
-          <img
-            src={f.profilePic}
-            className="w-12 h-11 rounded-full object-cover"
-          />
-          <span
-            className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-base-100 ${
-              isOnline ? "bg-green-500" : "bg-gray-400"
-            }`}
-          />
-        </div>
-
-        <div className="flex-1 min-w-0">
-          <div className="font-medium">{f.fullName}</div>
-          <div className={`text-xs ${isOnline ? "text-green-500" : "text-base-content/50"}`}>
-            {statusText}
-          </div>
-        </div>
-
-        {unreadForFriend(f) > 0 && (
-          <span className="badge badge-success badge-xs">
-            {unreadForFriend(f)}
-          </span>
-        )}
+    {friends.length === 0 ? (
+      <div className="flex flex-col items-center justify-center h-full text-center p-4">
+        <p className="text-base-content/50 mb-2">No friends yet</p>
+        <p className="text-sm text-base-content/40">Add friends to start chatting</p>
       </div>
-      );
-    })}
+    ) : filteredFriends.length === 0 ? (
+      <div className="flex items-center justify-center h-full text-base-content/50">
+        No results found
+      </div>
+    ) : (
+      filteredFriends.map((f) => {
+        const { status, text: statusText } = getFriendStatus(f);
+        const isOnline = status === "online";
+
+        return (
+        <div
+          key={f._id}
+          onClick={() => openChat(f)}
+          className={`flex items-center gap-4 p-3 cursor-pointer transition ${
+            selectedFriend?._id === f._id
+              ? "bg-base-200 rounded-2xl"
+              : "hover:bg-base-200 rounded-2xl"
+          }`}
+        >
+          <div className="relative">
+            <img
+              src={f.profilePic}
+              className="w-12 h-11 rounded-full object-cover"
+            />
+            <span
+              className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-base-100 ${
+                isOnline ? "bg-green-500" : "bg-gray-400"
+              }`}
+            />
+          </div>
+
+          <div className="flex-1 min-w-0">
+            <div className="font-medium">{f.fullName}</div>
+            <div className={`text-xs ${isOnline ? "text-green-500" : "text-base-content/50"}`}>
+              {statusText}
+            </div>
+          </div>
+
+          {unreadForFriend(f) > 0 && (
+            <span className="badge badge-success badge-xs">
+              {unreadForFriend(f)}
+            </span>
+          )}
+        </div>
+        );
+      })
+    )}
   </div>
 </aside>
 
@@ -336,8 +347,9 @@ const MessagesPage = () => {
     <Thread />
   </Channel>
 ) : (
-  <div className="flex-1 flex items-center justify-center text-base-content/50">
-    Select a chat
+  <div className="flex-1 flex flex-col items-center justify-center text-base-content/50">
+    <p className="mb-2">Start chat with new friend</p>
+    <p className="text-sm text-base-content/40">Go to Home to find friends</p>
   </div>
 )}
 </section>

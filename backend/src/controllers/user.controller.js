@@ -4,13 +4,15 @@ import Rating from "../models/Rating.js";
 
 export async function getRecommendedUsers(req, res) {
   try {
-    const currentUserId = req.user.id;
+    const currentUserId = String(req.user._id);
     const currentUser = req.user;
     const { minRating, nativeLanguage, learningLanguage, bestMatch } = req.query;
 
+    const friendsArray = Array.isArray(currentUser.friends) ? currentUser.friends.map(f => String(f)) : [];
+    const excludeIds = [currentUserId, ...friendsArray];
+    
     const query = {
-      _id: { $ne: currentUserId },
-      _id: { $nin: currentUser.friends },
+      _id: { $nin: excludeIds },
       isOnboarded: true,
     };
 
@@ -297,7 +299,7 @@ export const updatedUser = async (req, res) => {
 
 export async function sendFriendRequest(req, res) {
   try {
-    const myId = req.user.id;
+    const myId = String(req.user._id);
     const { id: recipientId } = req.params;
 
     // prevent sending req to yourself
@@ -313,17 +315,18 @@ export async function sendFriendRequest(req, res) {
     }
 
     // check if user is already friends
-    if (recipient.friends.includes(myId)) {
+    const recipientFriends = recipient.friends.map(f => String(f));
+    if (recipientFriends.includes(myId)) {
       return res
         .status(400)
         .json({ message: "You are already friends with this user" });
     }
 
-    // check if a req already exists
+    // check if a req already exists (only pending ones)
     const existingRequest = await FriendRequest.findOne({
       $or: [
-        { sender: myId, recipient: recipientId },
-        { sender: recipientId, recipient: myId },
+        { sender: myId, recipient: recipientId, status: "pending" },
+        { sender: recipientId, recipient: myId, status: "pending" },
       ],
     });
 
@@ -440,8 +443,8 @@ export async function rejectFriendRequest(req, res) {
         .json({ message: "You are not authorized to reject this request" });
     }
 
-    friendRequest.status = "rejected";
-    await friendRequest.save();
+    // Delete the request so sender can send again
+    await FriendRequest.findByIdAndDelete(requestId);
 
     res.status(200).json({ message: "Friend request rejected" });
   } catch (error) {
